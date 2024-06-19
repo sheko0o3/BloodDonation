@@ -1,0 +1,83 @@
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.hashers import make_password
+
+
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+
+from database import models
+from SerializerApp.serializers import UserInformationSerializer, UserSerializer
+
+
+
+
+class SaveUserInformation(APIView):
+
+    def post(self, request):
+        serializer = UserInformationSerializer(data=request.data)
+        if serializer.is_valid():
+            user_info= models.UserInformation.objects.create(
+                user = User.objects.get(id=request.data["user"]),
+                bloodType = models.BloodType.objects.get(id=request.data["bloodType"]),
+                name = request.data["name"],
+                mobile = request.data["mobile"],
+                govern = request.data["govern"],
+                state = request.data["state"],
+                Card_number = request.data["Card_number"],
+                # date_of_donation = request.data["date_of_donation"],
+                age = request.data["age"],
+                gender = request.data["gender"]
+            )
+            
+
+            return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+        return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+class UpdateInformation(APIView):
+
+    def get(self, request):
+        try:
+            user = User.objects.get(id=request.data["user"])
+            serializer = UserSerializer(instance=user, many=False)
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+
+            return Response(data={"message": "NOT FOUND!"}, status=status.HTTP_404_NOT_FOUND)
+
+
+    def put(self, request):
+        try:
+            user = User.objects.get(id=request.data["user"])
+            user_info = models.UserInformation.objects.get(user=user)
+        except ObjectDoesNotExist:
+            return Response(data={"message": "NOT FOUND!"}, status=status.HTTP_404_NOT_FOUND)
+            
+        if user.check_password(request.data["password"]):
+            serializer = UserInformationSerializer(instance=user_info, data=request.data)
+            if serializer.is_valid():
+                serializer.save(password=make_password(request.data["password"]))
+                serializer.help_text = "Update Success"
+                return Response(data={"message": serializer.help_text}, status=status.HTTP_202_ACCEPTED)
+            return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
+        else:
+            return Response(data={"message": "Wrong Password!"}, status=status.HTTP_401_UNAUTHORIZED)
+    
+
+
+        
+class DeleteUser(APIView):
+
+    def delete(self, request):
+        try:
+            user = User.objects.get(id=request.data["user"])
+        
+        except ObjectDoesNotExist:
+
+            return Response(data={"message": "NOT FOUND!"}, status=status.HTTP_404_NOT_FOUND) 
+
+        user.delete()
+        return Response(data={"messgae": "Account Deleted"}, status=status.HTTP_204_NO_CONTENT)
+
