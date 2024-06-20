@@ -21,18 +21,17 @@ class SaveUserInformation(APIView):
         if serializer.is_valid():
             user_info= models.UserInformation.objects.create(
                 user = User.objects.get(id=request.data["user"]),
-                bloodType = models.BloodType.objects.get(id=request.data["bloodType"]),
+                bloodType = models.BloodType.objects.get(bloodType=request.data["bloodType"]),
                 name = request.data["name"],
                 mobile = request.data["mobile"],
-                govern = request.data["govern"],
-                state = request.data["state"],
+                govern = models.Govern.objects.get(name=request.data["govern"]),
+                state = models.GovernStates.objects.get(name=request.data["state"]),
                 Card_number = request.data["Card_number"],
-                # date_of_donation = request.data["date_of_donation"],
+                date_of_donation = request.data["date_of_donation"],
                 age = request.data["age"],
                 gender = request.data["gender"]
             )
             
-
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
 

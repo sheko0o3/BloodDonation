@@ -52,7 +52,7 @@ class AnonymousUser(APIView):
         serializer = UserInformationSerializer(instance=queryset, many=True)
         for item in serializer.data:
             item["mobile"] = "Please Log In to Show"
-        return Response(data={"msg":"Logged In","data":serializer.data}, status=status.HTTP_200_OK)
+        return Response(data={"data":serializer.data}, status=status.HTTP_200_OK)
                                 
 
 class Donators(APIView):

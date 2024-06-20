@@ -23,6 +23,14 @@ class SaveLoginInfo(APIView):
         serializer = UserSerializer(data=data)
 
         if serializer.is_valid():
+            password = request.data["password"]
+            try:
+                password_validation.validate_password(password=password)
+                    
+            except ValidationError:
+                msg = password_validation.password_validators_help_texts()
+                return Response(data={"msg":"Password Not Valid",
+                                    "requirements": msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
             serializer.save(password=make_password(data["password"]))
             return Response(data={"message":"Account Created"}, status=status.HTTP_201_CREATED)
         return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -37,20 +45,22 @@ class ChangePassword(APIView):
         serializer = ChangePasswordSerializer(data=request.data)
         
         if serializer.is_valid():
-            try:
-                password_validation.validate_password(password=serializer.data["new_password"])
-                
-            except ValidationError:
-                msg = password_validation.password_validators_help_texts()
-                return Response(data={"msg":"Password Not Valid",
-                                      "requirements": msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            old_password = serializer.data["old_password"]
+            new_password = serializer.data["new_password"]
+            confirm_password = serializer.data["confirm_password"]
+
+            if not user.check_password(old_password):
+                return Response(data={"message":"Wrong Password"})
             else:
-                old_password = serializer.data["old_password"]
-                if not user.check_password(old_password):
-                    return Response(data={"message":"Wrong Password"})
+                try:
+                    password_validation.validate_password(password=serializer.data["new_password"])
+                    
+                except ValidationError:
+                    msg = password_validation.password_validators_help_texts()
+                    return Response(data={"msg":"Password Not Valid",
+                                        "requirements": msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
                 else:
-                    new_password = serializer.data["new_password"]
-                    confirm_password = serializer.data["confirm_password"]
+                    
                     if new_password == old_password:
                         return Response(data={"message":"U Entered Old Password"})
                     elif new_password != confirm_password:
@@ -67,7 +77,7 @@ class ChangePassword(APIView):
 
 class Login(APIView):
     
-     def get(self, request):
+    def post(self, request):
         username = request.data["username"]
         password = request.data["password"]
         try:
@@ -79,6 +89,7 @@ class Login(APIView):
                 users = models.UserInformation.objects.all()
                 serializer = UserInformationSerializer(instance=users, many=True)
                 return Response(data={"msg":"Logged In",
-                                      "data":serializer.data})
+                                        "user_id":user.id,
+                                        "data":serializer.data
+                                        })
             return Response(data={"msg":"Wrong Password"})
-        

@@ -23,20 +23,26 @@ class UserSerializer(serializers.ModelSerializer):
         depth = 1
 
 
+class BloodTypesSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.BloodType
+        fields = ("id", "bloodtype", "users")
+        depth = 1
+
 
 
 class UserInformationSerializer(serializers.ModelSerializer):
-
+    bloodType = serializers.SlugRelatedField(queryset=models.BloodType.objects.all(), slug_field="bloodtype")
+    govern = serializers.SlugRelatedField(queryset=models.Govern.objects.all(), slug_field="name")
+    state = serializers.SlugRelatedField(queryset=models.GovernState.objects.all(), slug_field="name")
+        
     class Meta:
         model = models.UserInformation
         fields = ("id", "user", "bloodType", "name", "mobile", "govern",
                    "state", "Card_number",
-                   "age","gender")
-        
-        
-
-class UpdateInformationSerializer(serializers.Serializer):
-    password = serializers.CharField(required=True)
+                   "age","gender","date_of_donation")
+    
 
 
 
@@ -59,13 +65,6 @@ class GovernSerializer(serializers.ModelSerializer):
 class StatesSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = models.GovernStates
+        model = models.GovernState
         fields = "__all__"
-
-class BloodTypesSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = models.BloodType
-        fields = ("id", "bloodtype", "user")
-        depth = 1
 
