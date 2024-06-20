@@ -13,7 +13,7 @@ class BloodType(models.Model):
     bloodtype = models.CharField(max_length=10, unique=True)
 
     def __str__(self) -> str:
-        return self.bloodType
+        return self.bloodtype
     
 
 class Govern(models.Model):
