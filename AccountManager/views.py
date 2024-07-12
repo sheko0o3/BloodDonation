@@ -31,7 +31,7 @@ class SaveLoginInfo(APIView):
                 msg = password_validation.password_validators_help_texts()
                 return Response(data={"msg":"Password Not Valid",
                                     "requirements": msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
-            serializer.save(password=make_password(data["password"]))
+            serializer.save(password=make_password(data["password"]), is_active = True)
             return Response(data={"message":"Account Created"}, status=status.HTTP_201_CREATED)
         return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
 
@@ -41,7 +41,10 @@ class SaveLoginInfo(APIView):
 class ChangePassword(APIView):
     
     def put(self, request):
-        user = User.objects.get(id=request.data["user_id"]) 
+        try:
+            user = User.objects.get(id=request.data["user_id"])
+        except ObjectDoesNotExist:
+            return Response(data={"error": "Not Found"})     
         serializer = ChangePasswordSerializer(data=request.data)
         
         if serializer.is_valid():
@@ -57,12 +60,12 @@ class ChangePassword(APIView):
                     
                 except ValidationError:
                     msg = password_validation.password_validators_help_texts()
-                    return Response(data={"msg":"Password Not Valid",
+                    return Response(data={"msg":"New Password Not Valid",
                                         "requirements": msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
                 else:
                     
                     if new_password == old_password:
-                        return Response(data={"message":"U Entered Old Password"})
+                        return Response(data={"message":"New Password Can't be Old Password"})
                     elif new_password != confirm_password:
                         return Response(data={"message":"Wrong Confirm Password"})
                     else:
@@ -93,3 +96,5 @@ class Login(APIView):
                                         "data":serializer.data
                                         })
             return Response(data={"msg":"Wrong Password"})
+
+

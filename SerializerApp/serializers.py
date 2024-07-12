@@ -24,7 +24,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class BloodTypesSerializer(serializers.ModelSerializer):
-
+    
     class Meta:
         model = models.BloodType
         fields = ("id", "bloodtype", "users")
@@ -36,7 +36,7 @@ class UserInformationSerializer(serializers.ModelSerializer):
     bloodType = serializers.SlugRelatedField(queryset=models.BloodType.objects.all(), slug_field="bloodtype")
     govern = serializers.SlugRelatedField(queryset=models.Govern.objects.all(), slug_field="name")
     state = serializers.SlugRelatedField(queryset=models.GovernState.objects.all(), slug_field="name")
-        
+    user = serializers.SlugRelatedField(read_only=True, slug_field="username")
     class Meta:
         model = models.UserInformation
         fields = ("id", "user", "bloodType", "name", "mobile", "govern",
@@ -63,7 +63,7 @@ class GovernSerializer(serializers.ModelSerializer):
 
 
 class StatesSerializer(serializers.ModelSerializer):
-
+    govername = serializers.SlugRelatedField(read_only=True, slug_field="name")
     class Meta:
         model = models.GovernState
         fields = "__all__"

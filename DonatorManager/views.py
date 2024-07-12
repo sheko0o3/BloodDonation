@@ -3,6 +3,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.hashers import make_password
 
 
+from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -24,7 +25,7 @@ class ShowDonatorInfo(APIView):
             return user_info
 
         except ObjectDoesNotExist:
-            return Response(data={"message": "NOT FOUND!"}, status=status.HTTP_404_NOT_FOUND)
+            raise Http404
 
 
     def get(self,request):
