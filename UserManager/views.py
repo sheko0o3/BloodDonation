@@ -7,21 +7,29 @@ from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import (IsAuthenticated, IsAdminUser)
 
 
 from database import models
 from SerializerApp.serializers import UserInformationSerializer, UserSerializer
 
+from oauth2_provider.contrib.rest_framework import (OAuth2Authentication,
+                                                    TokenHasReadWriteScope)
+from Permissions import permissions
+
 
 
 
 class SaveUserInformation(APIView):
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = (TokenHasReadWriteScope,)
 
     def post(self, request):
         serializer = UserInformationSerializer(data=request.data)
         if serializer.is_valid():
             user_info= models.UserInformation.objects.create(
-                user = User.objects.get(id=request.data["user"]),
+                # user = User.objects.get(id=request.data["user"]),
+                user = request.user,
                 bloodType = models.BloodType.objects.get(bloodtype=request.data["bloodType"]),
                 name = request.data["name"],
                 mobile = request.data["mobile"],
@@ -37,9 +45,12 @@ class SaveUserInformation(APIView):
         return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 class UpdateInformation(APIView):
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = (TokenHasReadWriteScope,)
     def get_user(self,request):
         try:
-            user = User.objects.get(id=request.data["user"])
+            # user = User.objects.get(id=request.data["user"])
+            user = request.user
             user_info = models.UserInformation.objects.get(user=user)
             return user_info
 
@@ -50,7 +61,8 @@ class UpdateInformation(APIView):
 
     def get(self, request):
         try:
-            user = User.objects.get(id=request.data["user"])
+            # user = User.objects.get(id=request.data["user"])
+            user = request.user
             user_info = models.UserInformation.objects.get(user=user)
             serializer = UserInformationSerializer(instance=user_info, many=False)
             return Response(data=serializer.data, status=status.HTTP_200_OK)
@@ -81,6 +93,8 @@ class UpdateInformation(APIView):
 
         
 class DeleteUser(APIView):
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = (TokenHasReadWriteScope, IsAuthenticated, permissions.DeleteAccount)
     def get_user(self,request):
         try:
             user = User.objects.get(id=request.data["user"])

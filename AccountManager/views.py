@@ -9,29 +9,52 @@ from rest_framework import status
 from rest_framework.views import APIView
 
 
+from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope
+from rest_framework.permissions import IsAuthenticated
+
+
 
 from SerializerApp.serializers import (UserSerializer, ChangePasswordSerializer, 
                                        UserInformationSerializer)
 from database import models
 
-
+import os
+import requests
 
 class SaveLoginInfo(APIView):
 
+    def create_token(self, name=None, password=None):
+
+        body: dict = {
+            "client_id":os.getenv("CLIENT_ID"),
+            "client_secret":os.getenv("CLIENT_SECRET"),
+            "username": name,
+            "password": password,
+            "grant_type":os.getenv("GRANT_TYPE")
+        }
+
+        response = requests.post(url="http://127.0.0.1:8000/o/token/", data=body)
+        data = response.json()
+        return data
+    
     def post(self, request):
         data = request.data
         serializer = UserSerializer(data=data)
 
         if serializer.is_valid():
-            password = request.data["password"]
+            password = data["password"]
             try:
                 password_validation.validate_password(password=password)
                     
             except ValidationError:
                 msg = password_validation.password_validators_help_texts()
+                
                 return Response(data={"msg":"Password Not Valid",
                                     "requirements": msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            name = data.get("username", None)
+            
             serializer.save(password=make_password(data["password"]), is_active = True)
+            token = self.create_token(name=name, password=password)
             return Response(data={"message":"Account Created"}, status=status.HTTP_201_CREATED)
         return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
 
