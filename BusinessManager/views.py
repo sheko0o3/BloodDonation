@@ -12,7 +12,7 @@ from SerializerApp.serializers import (GovernSerializer,StatesSerializer,
 from database import models
 
 from oauth2_provider.contrib.rest_framework import (OAuth2Authentication, TokenHasReadWriteScope)
-from oauth2_provider.models import AccessToken
+from oauth2_provider.models import AccessToken, RefreshToken
 
 
 import os
@@ -31,6 +31,7 @@ class AllGoverns(APIView):
 
 
 class AllStates(APIView):
+    authentication_classes = (OAuth2Authentication,)
 
     def get(self, request):
         queryset = models.GovernState.objects.all().order_by("name")
@@ -40,6 +41,7 @@ class AllStates(APIView):
 
 
 class AllBloodTypes(APIView):
+    authentication_classes = (OAuth2Authentication,)
 
     def get(self, request):
         queryset = models.BloodType.objects.all()
@@ -69,6 +71,7 @@ class Token(APIView):
             return user
         except :
             raise Http404
+            
 
     
     def get(self, request):
@@ -84,8 +87,14 @@ class Token(APIView):
                                     "Token":token}, status=status.HTTP_200_OK)
         
             else:
+                refresh_token = RefreshToken.objects.get(access_token=token_exists)
                 return Response(data={"Token":token_exists.token,
-                                      "Scopes":token_exists.scopes,}, status=status.HTTP_200_OK)
+                                      "token_type":"Bearer",
+                                      "expires_in":token_exists.expires.date(),
+                                      "refresh_token":refresh_token.token,
+                                      "Scopes":token_exists.scopes}, status=status.HTTP_200_OK)
+
+                                      
         
 
         

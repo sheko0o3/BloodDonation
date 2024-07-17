@@ -1,3 +1,4 @@
+from tkinter import N
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import get_object_or_404
@@ -14,6 +15,7 @@ from rest_framework.permissions import IsAuthenticated
 
 
 
+from Permissions.permissions import (UpdateOwnInfo,UpdateOwnPassword)
 from SerializerApp.serializers import (UserSerializer, ChangePasswordSerializer, 
                                        UserInformationSerializer)
 from database import models
@@ -23,7 +25,7 @@ import requests
 
 class SaveLoginInfo(APIView):
 
-    def create_token(self, name=None, password=None):
+    def create_token(self, name, password):
 
         body: dict = {
             "client_id":os.getenv("CLIENT_ID"),
@@ -41,8 +43,11 @@ class SaveLoginInfo(APIView):
         data = request.data
         serializer = UserSerializer(data=data)
 
+        name = data.get("username", None)
+        password = data.get("password", None)
+
         if serializer.is_valid():
-            password = data["password"]
+            
             try:
                 password_validation.validate_password(password=password)
                     
@@ -51,9 +56,8 @@ class SaveLoginInfo(APIView):
                 
                 return Response(data={"msg":"Password Not Valid",
                                     "requirements": msg}, status=status.HTTP_406_NOT_ACCEPTABLE)
-            name = data.get("username", None)
             
-            serializer.save(password=make_password(data["password"]), is_active = True)
+            serializer.save(password=make_password(data["password"]))
             token = self.create_token(name=name, password=password)
             return Response(data={"message":"Account Created"}, status=status.HTTP_201_CREATED)
         return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -62,6 +66,8 @@ class SaveLoginInfo(APIView):
 
 
 class ChangePassword(APIView):
+
+    permission_classes = (UpdateOwnPassword,)
     
     def put(self, request):
         try:

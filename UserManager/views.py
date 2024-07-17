@@ -21,9 +21,7 @@ from Permissions import permissions
 
 
 class SaveUserInformation(APIView):
-    authentication_classes = (OAuth2Authentication,)
-    permission_classes = (TokenHasReadWriteScope,)
-
+    
     def post(self, request):
         serializer = UserInformationSerializer(data=request.data)
         if serializer.is_valid():
@@ -45,8 +43,7 @@ class SaveUserInformation(APIView):
         return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 class UpdateInformation(APIView):
-    authentication_classes = (OAuth2Authentication,)
-    permission_classes = (TokenHasReadWriteScope,)
+    
     def get_user(self,request):
         try:
             # user = User.objects.get(id=request.data["user"])
@@ -94,7 +91,7 @@ class UpdateInformation(APIView):
         
 class DeleteUser(APIView):
     authentication_classes = (OAuth2Authentication,)
-    permission_classes = (TokenHasReadWriteScope, IsAuthenticated, permissions.DeleteAccount)
+    permission_classes = (permissions.UpdateOwnInfo,)
     def get_user(self,request):
         try:
             user = User.objects.get(id=request.data["user"])

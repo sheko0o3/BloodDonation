@@ -24,7 +24,7 @@ urlpatterns = [
     path("api/", include("UserManager.urls")),
     path("api/", include("DonatorManager.urls")),
     path("api/", include("BusinessManager.urls")),
-    path('o/', include(oauth2_urls)),
+    path("o/", include(oauth2_urls)),
     
 
 ]
