@@ -1,4 +1,3 @@
-from tkinter import N
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import get_object_or_404
@@ -10,7 +9,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 
 
-from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope
+from oauth2_provider.contrib.rest_framework import (TokenHasReadWriteScope, OAuth2Authentication)
 from rest_framework.permissions import IsAuthenticated
 
 
@@ -66,15 +65,22 @@ class SaveLoginInfo(APIView):
 
 
 class ChangePassword(APIView):
+    authentication_classes = (OAuth2Authentication,)
+    permission_classes = (UpdateOwnPassword, IsAuthenticated)
 
-    permission_classes = (UpdateOwnPassword,)
     
     def put(self, request):
-        try:
-            user = User.objects.get(id=request.data["user_id"])
-        except ObjectDoesNotExist:
-            return Response(data={"error": "Not Found"})     
+        # try:
+        #     user = User.objects.get(id=request.data["user_id"])
+        # except ObjectDoesNotExist:
+        #     return Response(data={"error": "Not Found"})  
+        
+        user = request.user  
+        self.check_object_permissions(request=request, obj=user)
+
         serializer = ChangePasswordSerializer(data=request.data)
+        
+        
         
         if serializer.is_valid():
             old_password = serializer.data["old_password"]
@@ -106,9 +112,8 @@ class ChangePassword(APIView):
 
 
 
-
 class Login(APIView):
-    
+
     def post(self, request):
         username = request.data["username"]
         password = request.data["password"]

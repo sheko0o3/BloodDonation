@@ -5,6 +5,7 @@ from django.http import Http404
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 
 from SerializerApp.serializers import (GovernSerializer,StatesSerializer,
@@ -22,8 +23,10 @@ import requests
 
 class AllGoverns(APIView):
     authentication_classes = (OAuth2Authentication,)
+    permission_classes = (IsAdminUser, IsAuthenticated)
 
     def get(self, request):
+        self.check_object_permissions(request=request, obj=request.user)
         queryset = models.Govern.objects.all().order_by("name")
         serializer = GovernSerializer(instance=queryset, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
@@ -32,8 +35,10 @@ class AllGoverns(APIView):
 
 class AllStates(APIView):
     authentication_classes = (OAuth2Authentication,)
+    permission_classes = (IsAdminUser, IsAuthenticated)
 
     def get(self, request):
+        self.check_object_permissions(request=request, obj=request.user)
         queryset = models.GovernState.objects.all().order_by("name")
         serializer = StatesSerializer(instance=queryset, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
@@ -42,8 +47,10 @@ class AllStates(APIView):
 
 class AllBloodTypes(APIView):
     authentication_classes = (OAuth2Authentication,)
+    permission_classes = (IsAdminUser, IsAuthenticated)
 
     def get(self, request):
+        self.check_object_permissions(request=request, obj=request.user)
         queryset = models.BloodType.objects.all()
         serializer = BloodTypesSerializer(instance=queryset, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
@@ -51,6 +58,7 @@ class AllBloodTypes(APIView):
 
 
 class Token(APIView):
+
     def create_token(self, name=None, password=None):
 
         body: dict = {
